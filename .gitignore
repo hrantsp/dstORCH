@@ -1,0 +1,9 @@
+node_modules/
+dist/
+
+# Protocol constants generated from dstDESK/protocol — never edited by hand
+src/generated/
+
+.env
+*.log
+.DS_Store
