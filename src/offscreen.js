@@ -139,7 +139,10 @@ function connect() {
   socket.binaryType = 'arraybuffer';
 
   socket.addEventListener('open', () => {
-    socket.send(control.hello(contextEpochUtcMs, config.token, 'dstORCH/0.1.0'));
+    // Read from the manifest rather than written here, so the handshake cannot
+    // report a version the extension does not actually have.
+    socket.send(control.hello(contextEpochUtcMs, config.token,
+                              `dstORCH/${chrome.runtime.getManifest().version}`));
   });
 
   socket.addEventListener('message', (event) => {
