@@ -1,26 +1,21 @@
 {
   "manifest_version": 3,
-  "name": "dstORCH — dual-stream capture",
+  "name": "dstORCH \u2014 dual-stream capture",
   "version": "0.1.0",
   "description": "Captures microphone and meeting tab audio separately and streams both to the dstDESK desktop app.",
-
   "minimum_chrome_version": "116",
-
   "permissions": [
     "tabCapture",
     "offscreen",
     "storage",
     "activeTab"
   ],
-
   "background": {
     "service_worker": "src/background.js",
     "type": "module"
   },
-
   "action": {
     "default_title": "Start capturing this tab"
   },
-
   "options_page": "src/options.html"
 }
