@@ -1,0 +1,14 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>dstORCH capture</title>
+<!--
+  Never visible. An offscreen document exists because MV3 service workers have no DOM
+  and are terminated when idle, while audio capture needs both a DOM and a lifetime
+  that outlasts a callback.
+
+  It also holds the WebSocket. Capture and transmission live together so audio buffers
+  never cross a postMessage boundary on their way out — at 31 frames per second per
+  stream that would be pure overhead.
+-->
+<audio id="monitor" autoplay></audio>
+<script type="module" src="offscreen.js"></script>
