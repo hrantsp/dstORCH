@@ -50,7 +50,7 @@ node dstORCH/tst/wire-check.mjs --seconds 2  # terminal 2
 
 That check imports `src/wire.js` unchanged and drives a real socket, so a wire-format
 disagreement can be found and fixed without loading the extension or joining a call. It
-exits non-zero on failure. **Run it after any change to `wire.js` or the protocol.**
+exits non-zero on failure. **Run it after any change to `src/wire.js` or the protocol.**
 
 ## Hard Contracts
 
@@ -92,11 +92,11 @@ offscreen document.
 
 ### Generated constants
 
-`src/generated/protocol.js` is produced by `dstDESK`'s build from `rec/protocol.json`
-there. Never hand-edit it, never commit it, and never hardcode a protocol constant
+`src/generated/protocol.js` is produced by `dstDESK`'s build from
+`dstDESK/rec/protocol.json`. Never hand-edit it, never commit it, and never hardcode a protocol constant
 anywhere in this repository.
 
-### `wire.js` stays portable
+### `src/wire.js` stays portable
 
 No `chrome.*`, no DOM, no browser globals. `tst/wire-check.mjs` imports it under Node,
 and that check is the only thing standing between a framing mistake and an afternoon of

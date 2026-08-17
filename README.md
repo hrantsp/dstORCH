@@ -36,10 +36,10 @@ origin.
 | File | Role |
 |---|---|
 | `src/background.js` | Service worker. Owns the toolbar action and the offscreen document's lifetime; handles no audio. |
-| `src/offscreen.html` / `offscreen.js` | Where capture and the WebSocket live. |
+| `src/offscreen.html`, `src/offscreen.js` | Where capture and the WebSocket live. |
 | `src/capture-worklet.js` | Runs on the audio thread; buffers 512 samples and stamps each frame from the shared clock. |
 | `src/wire.js` | Frame and control-message encoding. No browser APIs, so it also runs under Node. |
-| `src/options.html` / `options.js` | Microphone grant, port and token. |
+| `src/options.html`, `src/options.js` | Microphone grant, port and token. |
 
 Three decisions explain most of the structure, and all three are recorded with their
 alternatives in `dstOMNI/DESIGN.md`:

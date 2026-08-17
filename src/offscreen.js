@@ -12,11 +12,21 @@ import { SAMPLE_RATE, FRAME_SAMPLES, STREAM, DEFAULT_PORT } from './generated/pr
 // growth, and sampleIndex makes the loss visible at the far end.
 const MAX_BUFFERED_BYTES = 512 * 1024;
 
+// Resolved once, at load, rather than inside the handshake. An exception thrown while
+// building this string would kill the open handler before hello was ever sent, leaving
+// a connected socket that says nothing — which looks like the desktop app hanging.
+const CLIENT = (() => {
+  try {
+    return `dstORCH/${chrome.runtime.getManifest().version}`;
+  } catch {
+    return 'dstORCH/unknown';
+  }
+})();
+
 const RECONNECT_MIN_MS = 500;
 const RECONNECT_MAX_MS = 10000;
 
 let context = null;
-let socket = null;
 let monitor = null;
 
 let micStream = null;
@@ -119,33 +129,68 @@ function tap(stream, streamId) {
 }
 
 function send(streamId, { sampleIndex, samples }) {
-  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  // Audio only goes to a link that has completed its handshake. Sending on one that
+  // has not is a protocol violation, and the server is right to close on it.
+  if (!link || !link.ready || link.ws.readyState !== WebSocket.OPEN) return;
   if (!openStreams.has(streamId)) return;
 
-  if (socket.bufferedAmount > MAX_BUFFERED_BYTES) {
+  if (link.ws.bufferedAmount > MAX_BUFFERED_BYTES) {
     dropped[streamId] += 1;
     return;
   }
 
-  socket.send(encodeFrame(streamId, sampleIndex, samples));
+  link.ws.send(encodeFrame(streamId, sampleIndex, samples));
 }
 
 // ── transport ────────────────────────────────────────────────────────────────
 
+// One connection and its state, replaced as a whole on every reconnect.
+//
+// Every handler below closes over its own `current` rather than reading a shared
+// variable. Reading a shared one meant that after a reconnect, an older socket's
+// handler would act on the newer socket — which is how `bye` was sent as the first
+// message on a connection that had never said `hello`, and got the session rejected.
+let link = null;
+
+function closeLink() {
+  if (!link) return;
+  const closing = link;
+  link = null;
+  try {
+    closing.ws.close();
+  } catch {
+    // Already closing or closed; nothing to do.
+  }
+}
+
 function connect() {
   if (stopping) return;
 
-  socket = new WebSocket(`ws://127.0.0.1:${config.port}`);
-  socket.binaryType = 'arraybuffer';
+  // Explicitly, rather than by reassignment: an abandoned socket keeps its listeners
+  // and its place in the event queue.
+  closeLink();
 
-  socket.addEventListener('open', () => {
-    // Read from the manifest rather than written here, so the handshake cannot
-    // report a version the extension does not actually have.
-    socket.send(control.hello(contextEpochUtcMs, config.token,
-                              `dstORCH/${chrome.runtime.getManifest().version}`));
+  const current = { ws: new WebSocket(`ws://127.0.0.1:${config.port}`), ready: false };
+  current.ws.binaryType = 'arraybuffer';
+  link = current;
+
+  current.ws.addEventListener('open', () => {
+    if (link !== current) return; // superseded while connecting
+
+    // Guarded, because anything thrown here is thrown inside an event handler: the
+    // socket stays open, the handshake never happens, and the failure is invisible
+    // from both ends. Reporting it is the difference between a bug and a mystery.
+    try {
+      current.ws.send(control.hello(contextEpochUtcMs, config.token, CLIENT));
+    } catch (err) {
+      report('error', `Could not send the handshake: ${err?.message ?? err}`);
+      closeLink();
+    }
   });
 
-  socket.addEventListener('message', (event) => {
+  current.ws.addEventListener('message', (event) => {
+    if (link !== current) return;
+
     let message;
     try {
       message = JSON.parse(event.data);
@@ -163,17 +208,20 @@ function connect() {
 
     if (message.type !== 'ready') return;
 
+    current.ready = true;
     reconnectDelay = RECONNECT_MIN_MS;
 
     for (const streamId of [STREAM.MIC, STREAM.TAB]) {
-      socket.send(control.streamOpen(streamId));
+      current.ws.send(control.streamOpen(streamId));
       openStreams.add(streamId);
     }
 
     report('capturing', `Streaming to dstDESK on port ${config.port}`);
   });
 
-  socket.addEventListener('close', () => {
+  current.ws.addEventListener('close', () => {
+    if (link !== current) return; // a superseded socket closing is not news
+    link = null;
     openStreams.clear();
     if (stopping) return;
 
@@ -181,7 +229,7 @@ function connect() {
     scheduleReconnect();
   });
 
-  socket.addEventListener('error', () => {
+  current.ws.addEventListener('error', () => {
     // 'close' always follows, and handling both would double every message.
   });
 }
@@ -226,11 +274,13 @@ async function stop() {
   stopping = true;
   clearTimeout(reconnectTimer);
 
-  if (socket && socket.readyState === WebSocket.OPEN) {
+  // Only a link that handshook can be said goodbye to. Saying it on one that never
+  // sent hello is exactly the violation that was being rejected.
+  if (link && link.ready && link.ws.readyState === WebSocket.OPEN) {
     for (const streamId of openStreams) {
-      socket.send(control.streamClose(streamId, 'user-stopped'));
+      link.ws.send(control.streamClose(streamId, 'user-stopped'));
     }
-    socket.send(control.bye());
+    link.ws.send(control.bye());
   }
 
   const lost = dropped[STREAM.MIC] + dropped[STREAM.TAB];
@@ -241,10 +291,7 @@ async function stop() {
 async function teardown() {
   openStreams.clear();
 
-  if (socket) {
-    socket.close();
-    socket = null;
-  }
+  closeLink();
 
   for (const stream of [micStream, tabStream]) {
     stream?.getTracks().forEach((track) => track.stop());
