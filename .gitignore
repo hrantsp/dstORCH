@@ -1,8 +1,14 @@
 node_modules/
 dist/
 
-# Protocol constants generated from dstDESK/protocol — never edited by hand
-src/generated/
+# Protocol constants generated from dstDESK/rec/protocol.json — never edited by hand.
+#
+# protocol.js is committed, against the rule this line used to enforce: a Chrome extension
+# has no build step, so without it a clone of this repository alone cannot be loaded
+# unpacked, which is what the task asks for. Decision 21 in dstOMNI/DESIGN.md records the
+# concession and what would undo it. Anything else generated here stays out.
+src/generated/*
+!src/generated/protocol.js
 
 .env
 *.log
