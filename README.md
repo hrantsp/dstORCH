@@ -6,7 +6,11 @@ tab — the local microphone and the tab's own audio — and sends them, kept se
 **Kobayashi**, the desktop application in
 [`dstDESK`](https://github.com/hrantsp/dstDESK).
 
-Verbal does the talking; Kobayashi listens and writes it down.
+Verbal does the talking; Kobayashi listens and writes it down — the names come from
+*The Usual Suspects* (1995).
+
+The extension pins its id with a `key` in the manifest, so it loads with the same id
+every time and Kobayashi can accept that origin and no other.
 
 The wire protocol is defined by `dstDESK`. This repository consumes a generated copy of
 it rather than maintaining its own.

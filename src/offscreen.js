@@ -12,6 +12,11 @@ import { SAMPLE_RATE, FRAME_SAMPLES, STREAM, DEFAULT_PORT } from './generated/pr
 // growth, and sampleIndex makes the loss visible at the far end.
 const MAX_BUFFERED_BYTES = 512 * 1024;
 
+// HP:TODO: the socket is ws://, not wss://. Loopback traffic does not leave the machine,
+// so there is nothing on the wire to intercept, and a certificate for 127.0.0.1 that
+// every reviewer would have to trust costs more than it buys. It would matter the moment
+// the desktop application were allowed to live anywhere but this machine.
+
 // The version the service worker read from the manifest, falling back to reading it
 // here and then to nothing at all. Reading it in this context returned "unknown" on a
 // real run, so the reliable source is preferred and the other two are kept as backstops.
