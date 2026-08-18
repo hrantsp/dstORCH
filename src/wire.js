@@ -5,7 +5,7 @@
 // anything; it only lays bytes out in the order the server expects.
 //
 // Deliberately free of any browser API, so the same code runs under Node in
-// tst/wire-check.mjs. That check talks to a real dstdesk, which is what proves the
+// tst/wire-check.mjs. That check talks to a real Kobayashi, which is what proves the
 // encoder agrees with the C++ parser byte for byte.
 
 import {

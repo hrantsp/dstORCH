@@ -1,11 +1,12 @@
-# dstORCH
+# dstORCH — Verbal
 
-Chrome MV3 extension for the dual-stream transcription pipeline. It captures two audio
-streams from a meeting tab — the local microphone and the tab's own audio — and sends
-them, kept separate, to the [`dstDESK`](https://github.com/hrantsp/dstDESK) desktop
-application.
+**Verbal** is the Chrome MV3 extension of the dual-stream transcription pipeline;
+`dstORCH` is the repository it lives in. It captures two audio streams from a meeting
+tab — the local microphone and the tab's own audio — and sends them, kept separate, to
+**Kobayashi**, the desktop application in
+[`dstDESK`](https://github.com/hrantsp/dstDESK).
 
-`dstORCH` is the *orchestra*: it plays, and `dstDESK` listens.
+Verbal does the talking; Kobayashi listens and writes it down.
 
 The wire protocol is defined by `dstDESK`. This repository consumes a generated copy of
 it rather than maintaining its own.
@@ -62,7 +63,7 @@ running `dstDESK`, so a format disagreement can be found without loading the ext
 or joining a call:
 
 ```bash
-dstDESK/bin/Release/dstdesk --output out     # terminal 1
+dstDESK/bin/Release/kobayashi --output out     # terminal 1
 node dstORCH/tst/wire-check.mjs --seconds 2  # terminal 2
 ```
 

@@ -44,7 +44,7 @@ you clicked.
 Without a browser:
 
 ```bash
-dstDESK/bin/Release/dstdesk --output out     # terminal 1
+dstDESK/bin/Release/kobayashi --output out     # terminal 1
 node dstORCH/tst/wire-check.mjs --seconds 2  # terminal 2
 ```
 

@@ -1,6 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>dstORCH settings</title>
+<title>Verbal settings</title>
 <style>
   :root { color-scheme: light dark; }
   body { font: 15px/1.5 system-ui, sans-serif; margin: 2rem auto; max-width: 34rem; padding: 0 1rem; }
@@ -21,8 +21,8 @@
   .ok { color: #2e7d32; } .bad { color: #c0392b; }
 </style>
 
-<h1>dstORCH</h1>
-<p class="lede">Captures your microphone and the meeting tab separately, and streams both to the dstDESK desktop app.</p>
+<h1>Verbal</h1>
+<p class="lede">Captures your microphone and the meeting tab separately, and streams both to the Kobayashi desktop app.</p>
 
 <fieldset>
   <legend>Microphone access</legend>
@@ -40,11 +40,11 @@
 
   <label for="port">Port</label>
   <input id="port" type="number" min="1" max="65535">
-  <small>Must match the <code>--port</code> dstDESK is listening on.</small>
+  <small>Must match the <code>--port</code> Kobayashi is listening on.</small>
 
   <label for="token">Shared secret</label>
   <input id="token" type="text" placeholder="(none)">
-  <small>Only needed if dstDESK was started with <code>--token</code>.</small>
+  <small>Only needed if Kobayashi was started with <code>--token</code>.</small>
 
   <div id="saved"></div>
 </fieldset>

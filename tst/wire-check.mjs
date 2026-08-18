@@ -1,11 +1,11 @@
 // Proves this repository's encoder produces bytes dstDESK's parser accepts.
 //
 // It imports src/wire.js unchanged — the same module the offscreen document uses —
-// and drives a real socket against a running dstdesk. Chrome is not involved, so a
+// and drives a real socket against a running Kobayashi. Chrome is not involved, so a
 // wire-format disagreement can be found and fixed without loading an extension or
 // joining a call.
 //
-//   Terminal 1:  dstDESK/bin/Release/dstdesk --output out
+//   Terminal 1:  dstDESK/bin/Release/kobayashi --output out
 //   Terminal 2:  node dstORCH/tst/wire-check.mjs
 //
 // Exits non-zero on any failure, so it can be wired into a build later.
@@ -114,7 +114,7 @@ if (failures > 0) {
   process.exit(1);
 }
 
-// ── live check against a running dstdesk ─────────────────────────────────────
+// ── live check against a running Kobayashi ─────────────────────────────────────
 console.log(`\nConnecting to ws://127.0.0.1:${port}`);
 
 const socket = new WebSocket(`ws://127.0.0.1:${port}`);
@@ -134,7 +134,7 @@ function fail(reason) {
   clearTimeout(watchdog);
   if (timer) clearInterval(timer);
   console.log(`  FAIL  ${reason}`);
-  console.log('\nIs dstdesk running? Start it in another terminal first.');
+  console.log('\nIs Kobayashi running? Start it in another terminal first.');
   process.exit(1);
 }
 

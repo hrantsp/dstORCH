@@ -42,7 +42,7 @@ async function ensureOffscreenDocument() {
     // stops hearing their own meeting.
     reasons: ['USER_MEDIA', 'AUDIO_PLAYBACK'],
     justification:
-      'Captures microphone and meeting audio and streams both to the dstDESK desktop app.',
+      'Captures microphone and meeting audio and streams both to the Kobayashi desktop app.',
   });
 }
 
@@ -65,7 +65,7 @@ async function setBadge(text, colour, title) {
 // go and find a settings screen".
 async function requestMicrophone(tabId) {
   await writeSession({ pendingTabId: tabId });
-  await setBadge('?', '#d35400', 'dstORCH: microphone access needed');
+  await setBadge('?', '#d35400', 'Verbal: microphone access needed');
   await chrome.tabs.create({
     url: chrome.runtime.getURL('src/options.html?request=1'),
   });
@@ -119,7 +119,7 @@ chrome.action.onClicked.addListener(async (tab) => {
     // Any failure must leave the extension clickable again, or the only way out is to
     // reload it from chrome://extensions.
     await stopCapture();
-    await setBadge('!', '#c0392b', `dstORCH: ${err?.message ?? err}`);
+    await setBadge('!', '#c0392b', `Verbal: ${err?.message ?? err}`);
   }
 });
 
@@ -164,11 +164,11 @@ chrome.runtime.onMessage.addListener((message) => {
   if (message.state === 'error') {
     // An error leaves capture running but broken. Clearing state here means the next
     // click stops it cleanly instead of stacking another attempt on top.
-    setBadge('!', '#c0392b', `dstORCH: ${message.detail}`);
+    setBadge('!', '#c0392b', `Verbal: ${message.detail}`);
   } else if (message.state === 'reconnecting') {
-    setBadge('…', '#d35400', `dstORCH: ${message.detail} — click to stop`);
+    setBadge('…', '#d35400', `Verbal: ${message.detail} — click to stop`);
   } else if (message.state === 'capturing') {
-    setBadge('●', '#c0392b', `dstORCH: ${message.detail}`);
+    setBadge('●', '#c0392b', `Verbal: ${message.detail}`);
   } else if (message.state === 'stopped') {
     // The offscreen document tore itself down — after a rejected handshake, say.
     // Clear up directly rather than calling stopCapture, which would message it back

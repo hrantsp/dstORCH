@@ -17,9 +17,9 @@ const MAX_BUFFERED_BYTES = 512 * 1024;
 // a connected socket that says nothing — which looks like the desktop app hanging.
 const CLIENT = (() => {
   try {
-    return `dstORCH/${chrome.runtime.getManifest().version}`;
+    return `Verbal/${chrome.runtime.getManifest().version}`;
   } catch {
-    return 'dstORCH/unknown';
+    return 'Verbal/unknown';
   }
 })();
 
@@ -216,7 +216,7 @@ function connect() {
       openStreams.add(streamId);
     }
 
-    report('capturing', `Streaming to dstDESK on port ${config.port}`);
+    report('capturing', `Streaming to Kobayashi on port ${config.port}`);
   });
 
   current.ws.addEventListener('close', () => {
