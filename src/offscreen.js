@@ -12,16 +12,24 @@ import { SAMPLE_RATE, FRAME_SAMPLES, STREAM, DEFAULT_PORT } from './generated/pr
 // growth, and sampleIndex makes the loss visible at the far end.
 const MAX_BUFFERED_BYTES = 512 * 1024;
 
-// Resolved once, at load, rather than inside the handshake. An exception thrown while
-// building this string would kill the open handler before hello was ever sent, leaving
-// a connected socket that says nothing — which looks like the desktop app hanging.
-const CLIENT = (() => {
-  try {
-    return `Verbal/${chrome.runtime.getManifest().version}`;
-  } catch {
-    return 'Verbal/unknown';
+// The version the service worker read from the manifest, falling back to reading it
+// here and then to nothing at all. Reading it in this context returned "unknown" on a
+// real run, so the reliable source is preferred and the other two are kept as backstops.
+//
+// This cannot throw. Anything thrown while building the string would kill the open
+// handler before hello was ever sent, leaving a connected socket that says nothing —
+// which looks exactly like the desktop application hanging.
+function clientName() {
+  let version = config.version;
+  if (!version) {
+    try {
+      version = chrome.runtime.getManifest().version;
+    } catch {
+      version = null;
+    }
   }
-})();
+  return `Verbal/${version ?? 'unknown'}`;
+}
 
 const RECONNECT_MIN_MS = 500;
 const RECONNECT_MAX_MS = 10000;
@@ -181,7 +189,7 @@ function connect() {
     // socket stays open, the handshake never happens, and the failure is invisible
     // from both ends. Reporting it is the difference between a bug and a mystery.
     try {
-      current.ws.send(control.hello(contextEpochUtcMs, config.token, CLIENT));
+      current.ws.send(control.hello(contextEpochUtcMs, config.token, clientName()));
     } catch (err) {
       report('error', `Could not send the handshake: ${err?.message ?? err}`);
       closeLink();

@@ -48,7 +48,14 @@ async function ensureOffscreenDocument() {
 
 async function readConfig() {
   const stored = await chrome.storage.local.get({ port: DEFAULT_PORT, token: '' });
-  return { port: Number(stored.port) || DEFAULT_PORT, token: stored.token ?? '' };
+  return {
+    port: Number(stored.port) || DEFAULT_PORT,
+    token: stored.token ?? '',
+    // Read here, in the service worker, and carried to the offscreen document. Reading
+    // it there produced "unknown" on a real run, and a client that cannot state its own
+    // version defeats the point of tagging both halves in lockstep.
+    version: chrome.runtime.getManifest().version,
+  };
 }
 
 async function setBadge(text, colour, title) {
