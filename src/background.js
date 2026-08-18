@@ -90,12 +90,38 @@ async function startCapture(tab) {
   await writeSession({ capturingTabId: tab.id });
   await setBadge('●', '#c0392b', 'Capturing — click to stop');
 
-  await chrome.runtime.sendMessage({
+  await startOffscreen({
     target: 'offscreen',
     type: 'start',
     streamId,
     config: await readConfig(),
   });
+}
+
+async function startOffscreen(message, attempts = 20, delayMs = 50) {
+  // offscreen.js is an ES module, and createDocument resolves when the document has
+  // loaded — not when its module graph has finished executing and registered a message
+  // listener. A start sent into that gap is simply dropped, with "Receiving end does not
+  // exist" as the only trace. It happens on the first capture after the extension loads,
+  // when none of the module is cached, and almost never afterwards, which makes it look
+  // like a problem with whatever else changed in between.
+  //
+  // Chrome exposes no readiness signal for an offscreen document, so this asks until
+  // something answers. The reply means start() ran, not that it connected; failures
+  // inside it report themselves through their own status messages.
+  let last = null;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const reply = await chrome.runtime.sendMessage(message);
+      if (reply && reply.ok) return;
+    } catch (err) {
+      last = err;
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  throw new Error(
+    `the capture document did not start after ${attempts * delayMs} ms` +
+      (last ? `: ${last.message ?? last}` : ''));
 }
 
 async function stopCapture() {
