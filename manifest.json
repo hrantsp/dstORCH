@@ -17,17 +17,17 @@
   "action": {
     "default_title": "Start capturing this tab",
     "default_icon": {
-      "16": "res/verbal-16.png",
-      "32": "res/verbal-32.png",
-      "48": "res/verbal-48.png",
-      "128": "res/verbal-128.png"
+      "16": "icons/verbal-16.png",
+      "32": "icons/verbal-32.png",
+      "48": "icons/verbal-48.png",
+      "128": "icons/verbal-128.png"
     }
   },
   "options_page": "src/options.html",
   "icons": {
-    "16": "res/verbal-16.png",
-    "32": "res/verbal-32.png",
-    "48": "res/verbal-48.png",
-    "128": "res/verbal-128.png"
+    "16": "icons/verbal-16.png",
+    "32": "icons/verbal-32.png",
+    "48": "icons/verbal-48.png",
+    "128": "icons/verbal-128.png"
   }
 }
