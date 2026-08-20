@@ -63,6 +63,43 @@ function report(state, detail) {
 
 // ── audio graph ──────────────────────────────────────────────────────────────
 
+// What is asked of the microphone, and why each one is here. Decision 23.
+//
+//   echoCancellation — load-bearing, not hygiene. Decision 10 replays the captured
+//     meeting audio so the user can still hear the call, which puts the remote
+//     participants out of the speakers and, on a laptop, back into a microphone a few
+//     centimetres away. Uncancelled, those words are transcribed on the *microphone*
+//     stream, and the transcript shows the local user saying what the other side just
+//     said. Keeping the two speakers apart is the whole task; this constraint is what
+//     keeps them apart acoustically, and the stream identity keeps them apart logically.
+//
+//   noiseSuppression, autoGainControl — inherited defaults rather than measured
+//     choices. They are tuned for a human listener on a call, not for a speech model:
+//     suppression can take quiet speech with the noise, and gain control pumps. Left on
+//     because that is the configuration everything was verified in, and named here so
+//     the next person knows they were never compared against off.
+const MIC_CONSTRAINTS = {
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true,
+};
+
+// Constraints are requests, not settings. Chrome declines them silently on devices and
+// platforms that cannot honour them, and getSettings() is the only way to learn that it
+// did — so the difference between "echo cancellation is on" and "echo cancellation was
+// asked for" is a function call, and the property the transcript depends on should not
+// rest on the second one.
+function reportMicProcessing(stream) {
+  const settings = stream.getAudioTracks()[0]?.getSettings?.() ?? {};
+
+  if (settings.echoCancellation === false) {
+    report('warning',
+      'Echo cancellation is off on this microphone. On speakers the meeting will be ' +
+      'picked up by the mic and appear in the microphone transcript — use headphones.');
+  }
+  return settings;
+}
+
 // An offscreen document cannot raise a permission prompt: getUserMedia here fails
 // immediately with NotAllowedError instead of asking. Detecting that up front lets the
 // service worker open a page that *can* ask, rather than leaving the user to find the
@@ -87,13 +124,8 @@ async function buildGraph(streamId) {
   // absolute times. Ordering never needs it.
   contextEpochUtcMs = Date.now() - context.currentTime * 1000;
 
-  micStream = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      echoCancellation: true,
-      noiseSuppression: true,
-      autoGainControl: true,
-    },
-  });
+  micStream = await navigator.mediaDevices.getUserMedia({ audio: MIC_CONSTRAINTS });
+  reportMicProcessing(micStream);
 
   tabStream = await navigator.mediaDevices.getUserMedia({
     audio: {

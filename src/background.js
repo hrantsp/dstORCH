@@ -198,6 +198,12 @@ chrome.runtime.onMessage.addListener((message) => {
     // An error leaves capture running but broken. Clearing state here means the next
     // click stops it cleanly instead of stacking another attempt on top.
     setBadge('!', '#c0392b', `Verbal: ${message.detail}`);
+  } else if (message.state === 'warning') {
+    // Capture is working and something about it is worth knowing — echo cancellation
+    // that was refused, tab playback that could not be restored. There was no branch
+    // for this state, so every warning the offscreen document reported was dropped on
+    // arrival, which is the same as not having written it.
+    setBadge('!', '#d35400', `Verbal: ${message.detail}`);
   } else if (message.state === 'reconnecting') {
     setBadge('…', '#d35400', `Verbal: ${message.detail} — click to stop`);
   } else if (message.state === 'capturing') {
