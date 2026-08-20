@@ -44,8 +44,14 @@ class CaptureProcessor extends AudioWorkletProcessor {
       this.buffer[this.filled++] = Math.round(value * 32767);
 
       if (this.filled === this.frameSamples) {
-        // Transfer rather than copy — this runs on the audio thread, and every
-        // avoidable allocation here is a chance to glitch.
+        // Transferred, not copied: the buffer moves to the other thread instead of a
+        // kilobyte being duplicated on this one, 31 times a second.
+        //
+        // The allocation below is the price of that, not an oversight. A transferred
+        // buffer is detached, so there is nothing left to reuse — removing it would mean
+        // the main thread posting buffers back to be recycled, which couples the audio
+        // thread to it for a kilobyte at 31 Hz. That is a worse trade than one small
+        // allocation, and it is a trade rather than a rule: see decision 27.
         const samples = this.buffer;
         this.port.postMessage({ sampleIndex: this.frameStart, samples }, [samples.buffer]);
 
