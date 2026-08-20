@@ -12,6 +12,7 @@
 
 import { encodeFrame, control, toPcm16 } from '../src/wire.js';
 import {
+  VERSION,
   SAMPLE_RATE,
   FRAME_SAMPLES,
   FRAME_BYTES,
@@ -124,6 +125,10 @@ let sent = 0;
 let timer = null;
 let finished = false;
 
+// True once the deliberately malformed last frame has gone out: from then on a close is
+// the expected answer rather than a failure.
+let probing = false;
+
 const watchdog = setTimeout(() => {
   fail('timed out with no response from the server');
 }, (seconds + 10) * 1000);
@@ -155,12 +160,31 @@ socket.addEventListener('message', (event) => {
   const message = JSON.parse(event.data);
 
   if (message.type === 'error') {
-    fail(`server rejected the session: ${message.code} — ${message.message}`);
+    if (!probing) {
+      fail(`server rejected the session: ${message.code} — ${message.message}`);
+      return;
+    }
+
+    finished = true;
+    clearTimeout(watchdog);
+    check(`server parsed the ${sent} frames per stream it was sent`,
+          message.code === 'malformed-frame',
+          `answered '${message.code}' to a frame with a foreign version byte`);
+
+    console.log(failures === 0
+      ? '\nAll checks passed. Compare the recorded WAVs with the server log.'
+      : `\n${failures} check(s) failed.`);
+    setTimeout(() => { socket.close(); process.exit(failures === 0 ? 0 : 1); }, 200);
     return;
   }
   if (message.type !== 'ready') return;
 
+  // Whose ready this is, and which protocol it speaks. Checked because everything
+  // below is about two implementations agreeing, and the first thing to establish is
+  // that there is a second implementation on the other end.
   check('server accepted the handshake', true);
+  check('server speaks this protocol version', message.protocol === VERSION,
+        `got ${message.protocol}, expected ${VERSION}`);
 
   socket.send(control.streamOpen(STREAM.MIC));
   socket.send(control.streamOpen(STREAM.TAB));
@@ -168,16 +192,28 @@ socket.addEventListener('message', (event) => {
   timer = setInterval(() => {
     if (sent >= frameCount) {
       clearInterval(timer);
-      finished = true;
-      clearTimeout(watchdog);
 
+      // The frames above prove nothing on their own. A server that read none of them —
+      // that answered `ready` and dropped every binary message on the floor — passes
+      // every check to this point, because "the connection is still up" is all this
+      // side can see. Written against a sixty-line fake that did exactly that, and it
+      // reported "accepted all 62 frames per stream" and exited zero.
+      //
+      // So the last frame is one the specification says must be fatal: the same
+      // encoder, one byte changed. PROTOCOL.md §5.3 requires `malformed-frame` and a
+      // close. Getting it proves the server parsed these bytes rather than ignoring
+      // them, which is the whole claim this file makes.
+      // Closed first, so the ordinary shutdown path still runs and the recordings are
+      // still finished properly. `bye` is not sent: the frame below ends the session,
+      // and a bye before it would leave nothing listening to answer.
       socket.send(control.streamClose(STREAM.MIC, 'user-stopped'));
       socket.send(control.streamClose(STREAM.TAB, 'user-stopped'));
-      socket.send(control.bye());
 
-      check(`server accepted all ${sent} frames per stream`, true);
-      console.log('\nAll checks passed. Compare the recorded WAVs with the server log.');
-      setTimeout(() => { socket.close(); process.exit(0); }, 200);
+      probing = true;
+      const poisoned = encodeFrame(STREAM.MIC, startIndex + sent * FRAME_SAMPLES,
+                                   new Int16Array(FRAME_SAMPLES));
+      new DataView(poisoned).setUint8(0, VERSION + 1);
+      socket.send(poisoned);
       return;
     }
 
@@ -190,7 +226,17 @@ socket.addEventListener('message', (event) => {
 
 socket.addEventListener('error', () => fail('connection failed'));
 socket.addEventListener('close', () => {
+  if (finished) return;
+
+  // Closing while the poison frame is outstanding but before saying why is still a
+  // failure: PROTOCOL.md §4.3 requires the `error` first, so the client can tell what
+  // happened.
+  if (probing) {
+    fail('server closed on the malformed frame without sending an error first');
+    return;
+  }
+
   // A malformed frame makes the server close mid-stream, which is the failure this
   // whole check exists to catch.
-  if (!finished) fail(`server closed the connection after ${sent} frames`);
+  fail(`server closed the connection after ${sent} frames`);
 });
