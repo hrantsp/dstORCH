@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Verbal — dual-stream capture",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuoYrGSj+ftsQ1yV6GjA+vaUw51Uu5taCMsAtKHFvFLeY08018TTM6JLdHq4oHxGFmdm0z9x7ec0YpDa3b7vA+y9WIm5I/W1cnZvVHQjIhc8LSCKeSUlQnTkcU4S5tuhQyIMgTRenghl4ZgoTpwTjcSbl2CFrH6fUpvU8XAmhSpbKBOnXXKg+leCqtqqgoLi9iZnrKyh3J78FbcQap/6s6hDL545VyFqf2fbUBSoxF6lPOiLuAu7nDvQ5ffJoLF64Fxh6s+FBrF+S4tpJSvU3RsQzMy/jYr6VmCWhA91B8Mkw9pE0q7rE0taGR7yeJtMQg++zPDuJ7lNswEj4nnBbXQIDAQAB",
   "description": "Captures microphone and meeting tab audio separately and streams both to the Kobayashi desktop app.",
   "minimum_chrome_version": "116",
